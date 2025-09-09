@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./tweets.db
+      - BEARER_TOKEN=${BEARER_TOKEN}
+      - DEBUG=true
+    volumes:
+      - ./app:/app/app:ro
+      - tweet_data:/app
+    restart: unless-stopped
+
+  # Service PostgreSQL optionnel pour la production
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: tweets_db
+      POSTGRES_USER: tweets_user
+      POSTGRES_PASSWORD: tweets_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+volumes:
+  tweet_data:
+  postgres_data:

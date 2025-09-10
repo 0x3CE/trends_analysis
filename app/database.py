@@ -1,4 +1,4 @@
-# app/database.py
+# app/database.py (version corrigée)
 """Database configuration and session management."""
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
@@ -10,33 +10,31 @@ from .config import settings
 
 logger = logging.getLogger(__name__)
 
-# Configuration spécifique à SQLite pour éviter les problèmes de threading
-connect_args = {}
-if settings.database_url.startswith("sqlite"):
-    connect_args = {
-        "check_same_thread": False,
-        "poolclass": StaticPool,
-    }
 
-engine = create_engine(
-    settings.database_url, 
-    connect_args=connect_args,
-    echo=settings.debug
-)
+def create_database_engine():
+    """Crée et configure le moteur de base de données selon l'environnement."""
+    engine_kwargs = {"echo": settings.debug}
+    
+    # Configuration spécifique pour SQLite
+    if settings.database_url.startswith("sqlite"):
+        engine_kwargs.update({
+            "connect_args": {"check_same_thread": False},
+            "poolclass": StaticPool
+        })
+    
+    return create_engine(settings.database_url, **engine_kwargs)
 
-SessionLocal = sessionmaker(
-    autocommit=False, 
-    autoflush=False, 
-    bind=engine
-)
 
+# Initialisation du moteur et de la session
+engine = create_database_engine()
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
 def get_db() -> Generator:
     """
     Dependency injection pour obtenir une session de base de données.
-    Assure la fermeture automatique de la session après utilisation.
+    Gère automatiquement l'ouverture, les erreurs et la fermeture de session.
     
     Yields:
         Session: Session SQLAlchemy configurée

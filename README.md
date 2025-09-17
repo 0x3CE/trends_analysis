@@ -146,12 +146,6 @@ MIT License – libre à vous de l’utiliser, de l’améliorer ou de vous en i
 
 ## Screenshots
 
-![UI Example](https://via.placeholder.com/800x400?text=Interface+Trends_analysis)
-*Exemple d’interface utilisateur (placeholder)*
-
-![Analytics Example](https://via.placeholder.com/800x400?text=Analytics+Dashboard)
-*Exemple de visualisation des tendances*
-
 ---
 
 > Avec **Trends\_analysis**, vous ne suivez plus les tendances… vous les anticipez. 😉

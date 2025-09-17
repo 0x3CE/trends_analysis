@@ -1,4 +1,4 @@
-# app/database.py (version corrigée)
+# app/database.py
 """Database configuration and session management."""
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base

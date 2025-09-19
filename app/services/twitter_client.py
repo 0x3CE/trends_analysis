@@ -1,5 +1,57 @@
 # app/services/twitter_client.py
-"""Twitter/X API client service."""
+"""Twitter/X API client service.
+
+* **Rôle global** : C’est le **client HTTP pour l’API Twitter/X v2**.
+  C’est lui qui parle directement avec Twitter, et il fournit une interface propre pour les services (ex: `tweet_service`).
+
+* **Structure** :
+
+  * Classe `TwitterClient` :
+
+    * Configure l’authentification avec le **Bearer Token** (pris dans `settings`).
+    * Définit une session HTTP (`requests.Session`) avec stratégie de **retry automatique** pour robustesse.
+    * Supporte le timeout (30s).
+  * Instance globale `twitter_client` créée si `settings.bearer_token` est défini, sinon `None`.
+
+* **Fonctionnalités** :
+
+  1. **`__init__`**
+
+     * Vérifie que `settings.bearer_token` existe. Sinon → `ConfigurationError`.
+     * Initialise `base_url`, `headers`, et crée une session HTTP robuste.
+
+  2. **`_create_session()`** (interne)
+
+     * Monte un `HTTPAdapter` avec stratégie de retry (`3 tentatives`, backoff exponentiel `1s`, pour codes `[429, 500, 502, 503, 504]`).
+     * Ajoute les headers d’authentification (`Bearer`).
+
+  3. **`search_recent(query, max_results, next_token)`**
+
+     * Fait un appel GET sur `/tweets/search/recent`.
+     * Paramètres :
+
+       * `query` : recherche (mots-clés, hashtags…).
+       * `max_results` : borné entre 10 et 100.
+       * `tweet.fields` : récupère `created_at, author_id, text, id`.
+       * `next_token` : pour pagination.
+     * Retourne le JSON brut de l’API.
+     * Logs détaillés : début recherche, nb de tweets récupérés.
+     * Gestion d’erreurs :
+
+       * Problème réseau/HTTP → `TwitterAPIError`.
+       * Réponse JSON invalide → `TwitterAPIError`.
+
+* **Exemple de flow** :
+
+  * `TweetService.collect_tweets()` appelle `twitter_client.search_recent(...)`.
+  * Si `twitter_client` n’est pas instancié (pas de token), `TweetService` lève une `TwitterAPIError`.
+
+👉 En bref : `twitter_client` est **le guichet officiel pour interroger Twitter/X**.
+Il est conçu pour être robuste (retry, logs, gestion d’erreurs) et sert de brique de base à tout le pipeline de collecte.
+
+Tu veux que je résume maintenant les **`models`** et **`schemas`** (les pièces centrales pour la DB et la validation API), ou tu préfères que je reste concentré sur les services/routes avant d’attaquer la structure data ?
+
+"""
 import requests
 import logging
 from typing import Dict, Any, Optional

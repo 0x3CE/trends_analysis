@@ -1,5 +1,43 @@
 # app/database.py
-"""Database configuration and session management."""
+"""Database configuration and session management.
+
+* **Rôle global** : gérer la **connexion à la base de données** et fournir une session SQLAlchemy utilisable via FastAPI.
+  👉 C’est la colonne vertébrale de la persistance, utilisée par tous les services et routes.
+
+* **Fonctionnalités principales** :
+
+  1. **`create_database_engine()`**
+
+     * Construit un moteur SQLAlchemy à partir de `settings.database_url`.
+     * Si c’est **SQLite** → applique des configs spéciales :
+
+       * `check_same_thread=False` (multi-threads autorisés).
+       * `StaticPool` (utile pour tests et bases en mémoire).
+     * Active le mode debug SQL (`echo=True`) si `settings.debug=True`.
+
+  2. **Moteur et session**
+
+     * `engine` → moteur DB global.
+     * `SessionLocal` → factory de sessions (`autocommit=False`, `autoflush=False`).
+     * `Base = declarative_base()` → base des modèles ORM (`models.Tweet`, etc.).
+
+  3. **`get_db()`**
+
+     * Fonction génératrice pour FastAPI (dépendance `Depends(get_db)`).
+     * Fournit une session `db`.
+     * Gère les erreurs : rollback en cas d’exception.
+     * Ferme proprement la session dans tous les cas.
+
+* **Intégration** :
+
+  * Appelé dans les routes (`tweets.py`, `analytics.py`) via `Depends(get_db)`.
+  * C’est le lien entre les **routes/services** et la base physique (SQLite, Postgres, etc.).
+
+👉 En résumé : ce fichier est le **plomberie DB** de l’app : création moteur, session, injection dans FastAPI, avec robustesse et compatibilité SQLite.
+
+Tu veux que je passe aux **models** (vu qu’ils héritent de `Base`) pour compléter le puzzle ORM ?
+
+"""
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.pool import StaticPool

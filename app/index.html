@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Twitter Analytics</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1da1f2 0%, #0d8bd9 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #1da1f2;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .content-section {
+            padding: 30px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #1da1f2 0%, #0d8bd9 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(29, 161, 242, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(29, 161, 242, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .input-group input {
+            padding: 10px 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 20px;
+            outline: none;
+            transition: border-color 0.3s ease;
+            min-width: 200px;
+        }
+
+        .input-group input:focus {
+            border-color: #1da1f2;
+        }
+
+        .tweets-container, .hashtags-container, .volume-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        .tweet-card {
+            border: 1px solid #e1e8ed;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .tweet-card:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .tweet-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .tweet-text {
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .hashtag-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .hashtag-item:last-child {
+            border-bottom: none;
+        }
+
+        .hashtag-name {
+            color: #1da1f2;
+            font-weight: 500;
+        }
+
+        .hashtag-count {
+            background: linear-gradient(135deg, #1da1f2 0%, #0d8bd9 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #1da1f2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #ffe6e6;
+            color: #d63031;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #d63031;
+        }
+
+        .volume-chart {
+            height: 200px;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            border-radius: 10px;
+            margin: 20px 0;
+            display: flex;
+            align-items: end;
+            justify-content: space-around;
+            padding: 20px;
+            color: white;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+            }
+            
+            .input-group input {
+                min-width: 150px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐦 Dashboard Twitter Analytics</h1>
+            <p>Visualisation et analyse de vos tweets collectés</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="total-tweets">0</div>
+                <div class="stat-label">Total Tweets</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="unique-hashtags">0</div>
+                <div class="stat-label">Hashtags Uniques</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="avg-per-hour">0</div>
+                <div class="stat-label">Moyenne/Heure</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="last-update">-</div>
+                <div class="stat-label">Dernière MAJ</div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2 class="section-title">🔍 Collecte de Tweets</h2>
+            <div class="controls">
+                <div class="input-group">
+                    <input type="text" id="search-query" placeholder="Rechercher des tweets..." value="artificial intelligence">
+                    <input type="number" id="max-results" placeholder="Nb max" value="20" min="1" max="100">
+                    <button class="btn" onclick="collectTweets()">Collecter</button>
+                </div>
+                <button class="btn" onclick="refreshData()">Actualiser tout</button>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2 class="section-title">📊 Top Hashtags</h2>
+            <div class="hashtags-container" id="hashtags-container">
+                <div class="loading">Chargement des hashtags...</div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2 class="section-title">📈 Volume par Heure</h2>
+            <div class="volume-container" id="volume-container">
+                <div class="loading">Chargement du volume...</div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2 class="section-title">🐦 Tweets Récents</h2>
+            <div class="tweets-container" id="tweets-container">
+                <div class="loading">Chargement des tweets...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration de l'API
+        const API_BASE = 'http://localhost:8000'; // Ajuste selon ton port FastAPI
+
+        // Test de connexion API au démarrage
+        async function testApiConnection() {
+            try {
+                console.log('Test de connexion à:', API_BASE);
+                const response = await fetch(`${API_BASE}/health`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ API connectée:', data);
+                    return true;
+                } else {
+                    console.error('❌ API répond mais erreur:', response.status);
+                    showConnectionError(`API erreur ${response.status}`);
+                    return false;
+                }
+            } catch (error) {
+                console.error('❌ Impossible de joindre l\'API:', error);
+                showConnectionError(error.message);
+                return false;
+            }
+        }
+
+        function showConnectionError(message) {
+            const errorHtml = `
+                <div class="error" style="margin: 20px; padding: 20px;">
+                    <h3>🚫 Connexion API échouée</h3>
+                    <p><strong>Erreur:</strong> ${message}</p>
+                    <p><strong>Vérifications:</strong></p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>Ton API FastAPI est-elle démarrée ? <code>uvicorn app.main:app --reload --port 8000</code></li>
+                        <li>L'URL est-elle correcte ? Actuellement: <code>${API_BASE}</code></li>
+                        <li>CORS configuré ? Vérifie le middleware CORS dans main.py</li>
+                    </ul>
+                    <button class="btn" onclick="testApiConnection().then(ok => ok && refreshData())">Retester</button>
+                </div>
+            `;
+            
+            // Affiche l'erreur dans tous les containers
+            ['tweets-container', 'hashtags-container', 'volume-container'].forEach(id => {
+                const container = document.getElementById(id);
+                if (container) container.innerHTML = errorHtml;
+            });
+        }
+
+        // Fonctions utilitaires
+        function formatDate(dateStr) {
+            if (!dateStr) return 'Date inconnue';
+            const date = new Date(dateStr);
+            return date.toLocaleString('fr-FR');
+        }
+
+        function showError(container, message) {
+            container.innerHTML = `<div class="error">Erreur: ${message}</div>`;
+        }
+
+        // Collecte de nouveaux tweets
+        async function collectTweets() {
+            const query = document.getElementById('search-query').value;
+            const maxResults = parseInt(document.getElementById('max-results').value);
+            
+            if (!query.trim()) {
+                alert('Veuillez saisir une requête de recherche');
+                return;
+            }
+
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = 'Collecte en cours...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/tweets/collect`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        max_results: maxResults
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Erreur lors de la collecte');
+                }
+
+                const tweets = await response.json();
+                alert(`✅ ${tweets.length} nouveaux tweets collectés !`);
+                
+                // Actualise toutes les données
+                await refreshData();
+                
+            } catch (error) {
+                console.error('Erreur collecte:', error);
+                alert(`❌ Erreur: ${error.message}`);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // Charge les statistiques
+        async function loadStats() {
+            try {
+                // Test connexion d'abord
+                const healthResponse = await fetch(`${API_BASE}/health`);
+                if (!healthResponse.ok) throw new Error(`API unreachable (${healthResponse.status})`);
+                
+                // Charge les tweets pour compter
+                const tweetsResponse = await fetch(`${API_BASE}/tweets/?limit=1000`);
+                if (!tweetsResponse.ok) throw new Error(`Error loading tweets (${tweetsResponse.status})`);
+                const tweets = await tweetsResponse.json();
+                
+                // Charge les hashtags pour compter les uniques
+                const hashtagsResponse = await fetch(`${API_BASE}/analytics/hashtags?limit=100`);
+                if (!hashtagsResponse.ok) throw new Error(`Error loading hashtags (${hashtagsResponse.status})`);
+                const hashtagsData = await hashtagsResponse.json();
+                
+                // Met à jour les stats
+                document.getElementById('total-tweets').textContent = tweets.length;
+                document.getElementById('unique-hashtags').textContent = hashtagsData.top_hashtags?.length || 0;
+                document.getElementById('last-update').textContent = new Date().toLocaleTimeString('fr-FR');
+                
+                // Calcul moyenne par heure (approximation)
+                const avgPerHour = tweets.length > 0 ? Math.round(tweets.length / 24) : 0;
+                document.getElementById('avg-per-hour').textContent = avgPerHour;
+                
+            } catch (error) {
+                console.error('Erreur stats:', error);
+                // Affiche l'erreur dans les stats
+                ['total-tweets', 'unique-hashtags', 'avg-per-hour', 'last-update'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = '❌';
+                });
+            }
+        }
+
+        // Charge les tweets
+        async function loadTweets() {
+            const container = document.getElementById('tweets-container');
+            
+            try {
+                const response = await fetch(`${API_BASE}/tweets/?limit=50`);
+                
+                if (!response.ok) {
+                    throw new Error('Erreur lors du chargement des tweets');
+                }
+                
+                const tweets = await response.json();
+                
+                if (tweets.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">Aucun tweet trouvé. Commencez par en collecter !</p>';
+                    return;
+                }
+                
+                container.innerHTML = tweets.map(tweet => `
+                    <div class="tweet-card">
+                        <div class="tweet-meta">
+                            <span>ID: ${tweet.tweet_id}</span>
+                            <span>${formatDate(tweet.created_at)}</span>
+                        </div>
+                        <div class="tweet-text">${tweet.text}</div>
+                        <div class="tweet-meta">
+                            <span>Auteur: ${tweet.author_id || 'Inconnu'}</span>
+                            <span>Collecté: ${formatDate(tweet.collected_at)}</span>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Erreur tweets:', error);
+                showError(container, error.message);
+            }
+        }
+
+        // Charge les hashtags
+        async function loadHashtags() {
+            const container = document.getElementById('hashtags-container');
+            
+            try {
+                const response = await fetch(`${API_BASE}/analytics/hashtags?limit=20`);
+                
+                if (!response.ok) {
+                    throw new Error('Erreur lors du chargement des hashtags');
+                }
+                
+                const data = await response.json();
+                const hashtags = data.top_hashtags || [];
+                
+                if (hashtags.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">Aucun hashtag trouvé.</p>';
+                    return;
+                }
+                
+                container.innerHTML = hashtags.map(item => `
+                    <div class="hashtag-item">
+                        <span class="hashtag-name">${item.hashtag}</span>
+                        <span class="hashtag-count">${item.count}</span>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Erreur hashtags:', error);
+                showError(container, error.message);
+            }
+        }
+
+        // Charge le volume par heure
+        async function loadVolume() {
+            const container = document.getElementById('volume-container');
+            
+            try {
+                const response = await fetch(`${API_BASE}/analytics/volume_by_hour`);
+                
+                if (!response.ok) {
+                    throw new Error('Erreur lors du chargement du volume');
+                }
+                
+                const data = await response.json();
+                const volumeData = data.volume_by_hour || [];
+                
+                if (volumeData.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">Aucune donnée de volume disponible.</p>';
+                    return;
+                }
+                
+                // Affichage simple du volume (les 10 dernières heures)
+                const recentData = volumeData.slice(-10);
+                container.innerHTML = `
+                    <div class="volume-chart">
+                        ${recentData.map(item => `
+                            <div style="flex: 1; text-align: center;">
+                                <div style="font-size: 1.5rem; font-weight: bold;">${item.count}</div>
+                                <div style="font-size: 0.8rem; opacity: 0.8;">${item.hour_or_key.slice(-2)}h</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <p style="text-align: center; color: #666; margin-top: 10px;">
+                        Volume des 10 dernières heures (${recentData.length} périodes)
+                    </p>
+                `;
+                
+            } catch (error) {
+                console.error('Erreur volume:', error);
+                showError(container, error.message);
+            }
+        }
+
+        // Actualise toutes les données
+        async function refreshData() {
+            await Promise.all([
+                loadStats(),
+                loadTweets(),
+                loadHashtags(),
+                loadVolume()
+            ]);
+        }
+
+        // Initialisation au chargement de la page
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('Dashboard Twitter chargé');
+            
+            // Test de connexion en premier
+            const apiConnected = await testApiConnection();
+            
+            if (apiConnected) {
+                refreshData();
+            }
+        });
+    </script>
+</body>
+</html>

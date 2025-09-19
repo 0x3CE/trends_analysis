@@ -1,5 +1,45 @@
 # app/config.py
-"""Configuration management for the Twitter/X collector application."""
+"""Configuration management for the Twitter/X collector application.
+
+* **Rôle global** : gérer toute la **configuration de l’application** (DB, API Twitter/X, options d’exécution).
+  👉 C’est la source de vérité centrale pour les paramètres, avec support des variables d’environnement et `.env`.
+
+* **Classe `Settings` (hérite de `BaseSettings` de Pydantic)** :
+
+  * **DB** :
+
+    * `database_url` (par défaut SQLite `./tweets.db`).
+  * **Twitter/X API** :
+
+    * `x_api_base` (par défaut `https://api.x.com/2`).
+    * `bearer_token` (peut venir de l’env var `BEARER_TOKEN`).
+  * **App** :
+
+    * `app_name` = "Twitter/X Collector".
+    * `debug` = False.
+  * **Test mode** :
+
+    * `testing` détecté automatiquement (si `TESTING=true`, ou si exécution via `pytest`).
+
+* **Méthodes utilitaires** :
+
+  * `is_sqlite()` → True si la DB est SQLite.
+  * `is_memory_db()` → True si c’est une base en mémoire (`:memory:`).
+
+* **Config interne (`class Config`)** :
+
+  * Lit les variables dans `.env`.
+  * Pas sensible à la casse (`case_sensitive = False`).
+
+* **Instance globale** :
+
+  * `settings = Settings()` → dispo partout dans l’app.
+
+👉 En résumé : ce fichier est le **hub de configuration** qui alimente le client Twitter (`bearer_token`, `x_api_base`), la base (`database_url`), et le mode d’exécution (`debug`, `testing`).
+
+Tu veux que je résume ensuite la partie **`database`** (vu qu’on commence à toucher à la config/infra) ?
+
+"""
 import os
 from typing import Optional
 from pydantic import BaseSettings

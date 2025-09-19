@@ -1,5 +1,56 @@
 # app/models.py
-"""Database models for the Twitter/X collector application."""
+"""Database models for the Twitter/X collector application.
+
+### 🎯 Objectif principal
+
+Définir les **modèles ORM SQLAlchemy** pour stocker les tweets collectés depuis Twitter/X.
+
+---
+
+### 🗂️ Modèle principal : `Tweet`
+
+* **Table** : `tweets`
+
+* **Colonnes** :
+
+  * `id` : entier auto-incrémenté, clé primaire.
+  * `tweet_id` : string unique, identifiant Twitter du tweet.
+  * `author_id` : string, identifiant de l’auteur du tweet (nullable).
+  * `text` : contenu textuel du tweet (non nullable).
+  * `created_at` : datetime de création du tweet (nullable).
+  * `collected_at` : datetime automatique de collecte (`func.now()`).
+  * `raw_json` : JSON brut retourné par l’API Twitter (nullable).
+
+* **Index** :
+
+  * `ix_tweet_author_created` → composite sur `author_id` + `created_at` pour accélérer les requêtes par auteur/date.
+  * `ix_tweet_created` → sur `created_at` pour les tris/filtrages temporels fréquents.
+
+* **Représentation (`__repr__`)**
+
+  * Retourne un résumé pratique pour le logging/debug :
+
+    ```
+    <Tweet(id=1, tweet_id=123, author_id=456)>
+    ```
+
+---
+
+### 🔑 Points clés
+
+* Optimisé pour **recherches fréquentes sur la date et l’auteur**.
+* Stocke **texte brut et JSON** → permet analyses ultérieures (analytics, hashtags, sentiment).
+* Compatible avec `TweetService` pour insertion et récupération.
+* Compatible avec `AnalyticsService` pour analyser volume et hashtags.
+
+---
+
+En résumé : **c’est le cœur du modèle de données**, la table unique qui alimente à la fois la collecte et l’analyse des tweets.
+
+Si tu veux, Patron, je peux maintenant te faire **le schéma complet du fonctionnement de ton application** : comment tous les fichiers que tu m’as envoyés s’imbriquent, flux des données, services, routes et DB.
+Veux-tu que je fasse ça maintenant ?
+
+"""
 from sqlalchemy import Column, Integer, String, DateTime, Text, Index
 from sqlalchemy.sql import func
 from datetime import datetime

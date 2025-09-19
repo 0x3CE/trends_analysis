@@ -1,5 +1,55 @@
 # app/services/analytics_service.py
-"""Analytics service for tweet analysis."""
+"""Analytics service for tweet analysis.
+
+* **Rôle global** : Ce service contient la logique métier pour analyser les tweets stockés en base. C’est le **cerveau derrière `routes/analytics.py`** : les endpoints appellent ici pour exécuter le vrai calcul.
+
+* **Structure** :
+
+  * Classe `AnalyticsService` avec uniquement des méthodes statiques.
+  * Utilise **SQLAlchemy** pour récupérer les données (`Tweet.text`, `Tweet.created_at`).
+  * Utilise `Counter` pour agréger et compter efficacement.
+  * Ajoute une couche de robustesse (try/except, logs).
+
+* **Fonctionnalités** :
+
+  1. **`get_top_hashtags(limit, db)`**
+
+     * Récupère uniquement le champ `text` des tweets depuis la DB.
+     * Extrait les hashtags via une regex (`#\w+` insensible à la casse).
+     * Normalise en minuscules.
+     * Compte les occurrences avec `Counter`.
+     * Retourne les `limit` plus fréquents sous forme :
+
+       ```json
+       [{"hashtag": "#ai", "count": 42}, ...]
+       ```
+
+  2. **`get_volume_by_hour(db)`**
+
+     * Récupère uniquement `created_at` des tweets.
+     * Normalise la date en une clé par **heure** (`YYYY-MM-DDTHH`).
+
+       * Si `created_at` est une string → prend les 13 premiers caractères.
+       * Si `created_at` est un datetime → formate en ISO horaire.
+       * Sinon → clé `"unknown"`.
+     * Compte le volume de tweets par heure.
+     * Trie par heure et retourne une liste du type :
+
+       ```json
+       [{"hour_or_key": "2025-09-19T14", "count": 17}, ...]
+       ```
+
+* **Logs et robustesse** :
+
+  * Logge le nombre de résultats produits.
+  * Si une erreur survient (extraction hashtags ou parsing date), logge et retourne une liste vide au lieu de planter.
+
+👉 En bref : ce fichier fait **l’agrégation et l’analyse des tweets en base**.
+`analytics.py` est juste la vitrine API, mais toute l’intelligence (regex, comptage, parsing des heures) est ici.
+
+Tu veux que je continue à enchaîner directement sur le service **`tweet_service`** quand tu me l’enverras ?
+
+"""
 import re
 import logging
 from typing import Dict, List, Tuple

@@ -1,5 +1,42 @@
 # app/routes/analytics.py
-"""Analytics endpoints for tweet analysis."""
+"""Analytics endpoints for tweet analysis.
+
+* **Rôle global** : C’est un module FastAPI qui expose des endpoints REST pour faire des analyses sur les tweets (hashtags, volume horaire, et bientôt sentiment).
+
+* **Structure** :
+
+  * Il définit un **router FastAPI** avec le préfixe `/analytics`.
+  * Il utilise `Depends(get_db)` pour injecter une session SQLAlchemy dans chaque endpoint.
+  * Il délègue toute la logique métier à `AnalyticsService` (donc ce fichier n’analyse rien lui-même, il ne fait que router).
+
+* **Endpoints** :
+
+  1. **`/analytics/hashtags`**
+
+     * Retourne les hashtags les plus populaires.
+     * Paramètre `limit` (entre 1 et 100, défaut 20).
+     * Retourne un dict : `{ "top_hashtags": [...] }`.
+
+  2. **`/analytics/volume_by_hour`**
+
+     * Retourne le nombre de tweets par heure.
+     * Résultat : `{ "volume_by_hour": [...] }`.
+
+  3. **`/analytics/sentiment`**
+
+     * Pas encore implémenté.
+     * Retourne un **501 Not Implemented** avec une note sur l’usage futur de bibliothèques NLP (TextBlob, VADER, Transformers).
+
+* **Logs et erreurs** :
+
+  * Chaque endpoint logge ce qu’il génère.
+  * Si ça plante, ça remonte un **500 Internal Server Error** clair.
+
+👉 Bref : ce fichier sert uniquement de **pont entre l’API (FastAPI) et la logique métier (AnalyticsService)**.
+
+Tu veux m’envoyer le fichier **`analytics_service`** juste après ? Ce sera la pièce maîtresse derrière ces endpoints 🔑
+
+"""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import Dict, Any

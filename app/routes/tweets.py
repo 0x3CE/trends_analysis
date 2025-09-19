@@ -1,5 +1,49 @@
 # app/routes/tweets.py
-"""Tweet collection and retrieval endpoints."""
+"""Tweet collection and retrieval endpoints.
+
+* **Rôle global** : c’est le module FastAPI qui gère tout ce qui touche aux **tweets bruts** (collecte depuis Twitter/X, stockage en base, lecture, et une petite analyse simple).
+
+* **Structure** :
+
+  * Définit un **router FastAPI** avec préfixe `/tweets`.
+  * Utilise `TweetService` pour toute la logique (collecte + lecture).
+  * Utilise des `schemas` (Pydantic) pour valider et formater les requêtes/réponses.
+  * Gère les erreurs avec des exceptions personnalisées (`TwitterAPIError`, `DatabaseError`) et des logs.
+
+* **Endpoints** :
+
+  1. **`POST /tweets/collect`**
+
+     * Reçoit une requête (`CollectRequest`) contenant une `query` et `max_results`.
+     * Appelle `TweetService.collect_tweets()` pour interroger l’API Twitter/X et stocker les tweets en DB.
+     * Retourne les tweets insérés au format `TweetRead`.
+     * Gère proprement les erreurs API (502) et DB (500).
+
+  2. **`GET /tweets/`**
+
+     * Récupère les tweets déjà en DB.
+     * Paramètre `limit` (entre 1 et 1000, défaut 50).
+     * Tweets triés par date décroissante (logique déléguée à `TweetService`).
+     * Retourne des objets `TweetRead`.
+
+  3. **`GET /tweets/top-hashtags`**
+
+     * Petit endpoint indépendant.
+     * Prend une **liste de tweets (strings)** en paramètre.
+     * Passe la liste à `analyse_hashtag.top_hashtags()` (un utilitaire maison).
+     * Retourne les hashtags dominants.
+
+* **Logs et erreurs** :
+
+  * Logge les étapes importantes (début/fin collecte, nb de tweets récupérés).
+  * Catch spécifique pour erreurs API Twitter (502) et DB (500).
+  * Catch global en cas d’imprévu (500).
+
+👉 En résumé : ce fichier est le **point d’entrée pour collecter et lire les tweets**. C’est le frère jumeau du module analytics : lui s’occupe de la matière brute (tweets), pendant que `analytics.py` s’occupe de l’exploitation.
+
+Tu veux que je fasse un parallèle entre `tweets.py` et `analytics.py` déjà maintenant, ou on garde ça pour le gros schéma final une fois tous les fichiers envoyés ?
+
+"""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List

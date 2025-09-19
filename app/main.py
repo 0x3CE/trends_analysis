@@ -1,5 +1,81 @@
 # app/main.py
-"""Main FastAPI application setup and configuration."""
+"""Main FastAPI application setup and configuration.
+
+
+### 🎯 Objectif principal
+
+* Configurer et lancer l’API FastAPI.
+* Gérer le cycle de vie (lifespan), la sécurité (middlewares), les exceptions globales, et exposer les routes.
+
+---
+
+### ⚙️ Les parties essentielles
+
+1. **Configuration du logging**
+
+   * Log formaté et niveau `INFO` par défaut.
+   * Permet un suivi clair du démarrage, de l’arrêt et des erreurs.
+
+2. **`lifespan(app)` (asynccontextmanager)**
+
+   * Démarrage :
+
+     * Log “starting”.
+     * Création des tables DB (`Base.metadata.create_all(bind=engine)`).
+     * Vérifie que le `BEARER_TOKEN` est bien configuré (sinon warning).
+   * Arrêt :
+
+     * Log “shutting down”.
+       👉 C’est ici que tu initialises tes dépendances critiques.
+
+3. **Instance FastAPI (`app = FastAPI(...)`)**
+
+   * Titre = `settings.app_name`.
+   * Docs & Redoc activés uniquement si `debug=True`.
+   * Version figée à `1.0.0`.
+
+4. **Middleware**
+
+   * `TrustedHostMiddleware` :
+
+     * `*` si debug, sinon restreint à `localhost`.
+   * `CORS` (Cross-Origin Resource Sharing) :
+
+     * Ouvert à tous (`*`) si debug (utile en dev front/back séparés).
+
+5. **Gestion des exceptions globales**
+
+   * `TwitterAPIError` → `502 Bad Gateway`.
+   * `DatabaseError` → `500 Internal Server Error`.
+   * `ConfigurationError` → `500 Internal Server Error`.
+     👉 Ces handlers renvoient toujours une réponse JSON uniforme (`{"detail": ...}`).
+
+6. **Inclusion des routeurs**
+
+   * `tweets.router` → endpoints liés à la collecte/lecture des tweets.
+   * `analytics.router` → endpoints pour analyser les données (hashtags, stats).
+
+7. **Endpoints de santé (`/` et `/health`)**
+
+   * `/` → health check basique (status, nom app, version, API configurée ou non).
+   * `/health` → health check détaillé :
+
+     * Vérifie DB avec `SELECT 1`.
+     * Vérifie présence de `BEARER_TOKEN`.
+     * Retourne un statut global (`healthy` ou `degraded`).
+
+---
+
+### 🚀 En clair
+
+Ce fichier **démarre ton app**, **branche la DB**, **sécurise les accès**, et **prépare les routes**.
+Il agit comme le **point d’entrée unique** et garantit que tout est prêt avant que les requêtes arrivent.
+
+---
+
+👉 Tu veux que je trace maintenant la **vision complète du flow de données** (depuis un appel API → DB → retour API), histoire de voir comment tout s’imbrique ?
+
+"""
 import logging
 from contextlib import asynccontextmanager
 

@@ -1,5 +1,66 @@
 # app/services/tweet_service.py (version améliorée)
-"""Tweet collection and management service."""
+"""Tweet collection and management service.
+
+* **Rôle global** : C’est le **service métier qui gère les tweets** : collecte via l’API Twitter/X (via `twitter_client`), insertion en base, lecture, et comptage. C’est lui qui fait tout le boulot derrière `routes/tweets.py`.
+
+* **Fonctionnalités** :
+
+  1. **`collect_tweets(query, max_results, db)`**
+
+     * Vérifie la validité des paramètres (`query` non vide, `max_results > 0`).
+     * Appelle le client Twitter (`twitter_client.search_recent`).
+     * Pour chaque tweet trouvé :
+
+       * Appelle `_save_tweet_if_new()` pour vérifier et insérer.
+       * Compte les succès/erreurs.
+     * Retourne la liste des tweets insérés.
+     * Gestion robuste : si erreur API → `TwitterAPIError`, si problème DB → rollback + `DatabaseError`.
+
+  2. **`_save_tweet_if_new(tweet_data, db)` (privé)**
+
+     * Vérifie que `tweet_data` est un dict valide et contient un `id`.
+     * Check si le tweet existe déjà (`tweet_id`).
+     * Parse la date de création avec `_parse_tweet_date`.
+     * Construit un modèle `Tweet` et l’insère en DB.
+     * Gère les erreurs :
+
+       * **Doublon** → rollback + warning.
+       * **Autre erreur DB** → rollback + log.
+
+  3. **`_parse_tweet_date(date_str)` (privé)**
+
+     * Parse une date Twitter (formats ISO8601 variés).
+     * Supporte :
+
+       * Format standard `YYYY-MM-DDTHH:MM:SSZ`.
+       * Format avec timezone explicite (`+00:00`).
+       * Fallback → ajoute `+00:00`.
+     * Si parsing échoue → log warning et retourne `None`.
+
+  4. **`get_tweets(limit, db)`**
+
+     * Récupère les tweets en DB, triés par `created_at` desc.
+     * Limite entre 1 et 1000 (au-delà → warning sur pagination).
+     * Retourne une liste de `Tweet`.
+
+  5. **`get_tweets_count(db)`**
+
+     * Retourne le nombre total de tweets en DB.
+     * En cas d’erreur → `DatabaseError`.
+
+* **Points forts** :
+
+  * Gestion robuste des erreurs (rollback systématique si DB plante).
+  * Vérifications strictes des entrées.
+  * Journalisation détaillée (info, debug, warning, error).
+  * Bonne séparation des responsabilités (collecte / sauvegarde / parsing / lecture).
+
+👉 En résumé : ce fichier est le **moteur de persistance et de collecte des tweets**.
+Là où `analytics_service` exploite les tweets déjà stockés, **`tweet_service` est celui qui les fait rentrer dans le système**.
+
+Tu veux que je t’enchaîne le résumé du **`twitter_client`** quand tu me l’envoies ? Je sens que c’est la pièce qui ferme la boucle côté API externe 🔗.
+
+"""
 import json
 import logging
 from typing import List, Optional
